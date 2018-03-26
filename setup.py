@@ -8,7 +8,7 @@ setup(
   author = 'Joel Barmettler',
   author_email = 'joel.barmettler@uzh.ch',
   url = 'https://github.com/joelbarmettlerUZH/AudioRec',
-  download_url = 'https://github.com/joelbarmettlerUZH/AudioRec/archive/v_01.tar.gz',
+  download_url = 'https://github.com/joelbarmettlerUZH/AudioRec/archive/v_02.tar.gz',
   keywords = ['Audio', 'Recording', 'Sound', 'music'],
   install_requires=[
           'pyaudio',

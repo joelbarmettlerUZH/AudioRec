@@ -5,6 +5,7 @@ import os
 import time
 import threading
 
+
 class Recorder():
     #Defines sound properties like frequency and channels
     def __init__(self, chunk=1024, channels=2, rate=44100):
