@@ -51,7 +51,7 @@ To save the recorded audio, specify a filename and call *save*.
 rec.save("test.wav")
 ```
 
-Now that your file is saved, convert it to MP3 and delte the old file.
+Now that your file is saved, convert it to MP3 and delete the old file.
 
 ```python
 Recorder.wavTomp3("test.wav")
