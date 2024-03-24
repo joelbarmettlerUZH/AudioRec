@@ -1,92 +1,126 @@
-import pyaudio
-import wave
-import subprocess
+# Contributor: https://github.com/rudymohammadbali/
+
 import os
-import time
+import pyaudio
+import subprocess
 import threading
+import wave
+
+from termcolor import cprint
 
 
-class Recorder():
-    #Defines sound properties like frequency and channels
-    def __init__(self, chunk=1024, channels=2, rate=44100):
-        self.CHUNK = chunk
-        self.FORMAT = pyaudio.paInt16
-        self.CHANNELS = channels
-        self.RATE = rate
-        self._running = True
-        self._frames = []
+class Recorder:
+    """A class for recording audio."""
 
-    #Start recording sound
-    def start(self):
-        threading._start_new_thread(self.__recording, ())
+    def __init__(self, chunk: int = 1024, channels: int = 2, rate: int = 44100):
+        self.chunk = chunk
+        self.channels = channels
+        self.rate = rate
+        self.format = pyaudio.paInt16
 
-    def __recording(self):
-        #Set running to True and reset previously recorded frames
-        self._running = True
-        self._frames = []
-        #Create pyaudio instance
+    def start(self, duration: int = 5, filename: str = "output.wav"):
+        """Start recording audio."""
+        thread = threading.Thread(target=self.__recording, args=(duration, filename))
+        thread.start()
+
+    def __recording(self, duration, filename):
+        """Private method for recording audio."""
+        input_device = self.setup_mic()
+
+        if not input_device:
+            cprint("[!] No valid input device found.", color="red")
+            return
+
+        print(f"[!] Using input device {input_device}")
+
+        frames = []
         p = pyaudio.PyAudio()
-        #Open stream
-        stream = p.open(format=self.FORMAT,
-                        channels=self.CHANNELS,
-                        rate=self.RATE,
+        stream = p.open(format=self.format,
+                        channels=self.channels,
+                        rate=self.rate,
                         input=True,
-                        frames_per_buffer=self.CHUNK)
-        # To stop the streaming, new thread has to set self._running to false
-        # append frames array while recording
-        while(self._running):
-            data = stream.read(self.CHUNK)
-            self._frames.append(data)
+                        input_device_index=input_device,
+                        frames_per_buffer=self.chunk)
 
-        # Interrupted, stop stream and close it. Terinate pyaudio process.
+        print(f"[!] Start recording for {duration} seconds...")
+        for _ in range(0, int(self.rate / self.chunk * duration)):
+            data = stream.read(self.chunk)
+            frames.append(data)
+
+        cprint(f"[!] Saving as {filename}", color="green")
+        self.save_to_file(p, frames, filename)
+
         stream.stop_stream()
         stream.close()
         p.terminate()
 
-    # Sets boolean to false. New thread needed.
-    def stop(self):
-        self._running = False
-
-    #Save file to filename location as a wavefront file.
-    def save(self, filename):
-        print("Saving")
-        p = pyaudio.PyAudio()
-        if not filename.endswith(".wav"):
-            filename = filename + ".wav"
+    def save_to_file(self, p, frames, filename):
+        """Save recorded audio to a file."""
         wf = wave.open(filename, 'wb')
-        wf.setnchannels(self.CHANNELS)
-        wf.setsampwidth(p.get_sample_size(self.FORMAT))
-        wf.setframerate(self.RATE)
-        wf.writeframes(b''.join(self._frames))
+        wf.setnchannels(self.channels)
+        wf.setsampwidth(p.get_sample_size(self.format))
+        wf.setframerate(self.rate)
+        wf.writeframes(b''.join(frames))
         wf.close()
-        print("Saved")
 
-    # Delete a file
+    @staticmethod
+    def setup_mic():
+        """Setup microphone for recording."""
+        p = pyaudio.PyAudio()
+        default_device_index = None
+        try:
+            default_input = p.get_default_input_device_info()
+            default_device_index = default_input["index"]
+        except IOError:
+            cprint("[!] Default input device not found. Printing all input devices:", color="yellow")
+            for i in range(p.get_device_count()):
+                info = p.get_device_info_by_index(i)
+                if info['maxInputChannels'] > 0:
+                    cprint(f"[-] Device index: {i}, Device name: {info['name']}", color="grey")
+                    if default_device_index is None:
+                        default_device_index = i
+        return default_device_index
+
     @staticmethod
     def delete(filename):
-        os.remove(filename)
+        """Delete a file."""
+        if os.path.exists(filename):
+            os.remove(filename)
 
-    # Convert wav to mp3 with same name using ffmpeg.exe
     @staticmethod
-    def wavTomp3(wav):
-        mp3 = wav[:-3] + "mp3"
-        # Remove file if existent
-        if os.path.isfile(mp3):
-            Recorder.delete(mp3)
-        # Call CMD command
-        subprocess.call('ffmpeg -i "'+wav+'" "'+mp3+'"')
+    def wav_to_mp3(wav_file):
+        """Convert a .wav file to .mp3."""
+        if not os.path.isfile(wav_file):
+            cprint(f"[!] The file {wav_file} does not exist.", color="red")
+            return None
+
+        if not wav_file.endswith('.wav'):
+            cprint(f"[!] The file {wav_file} is not a .wav file.", color="red")
+            return None
+
+        mp3_file = wav_file[:-3] + "mp3"
+        if os.path.isfile(mp3_file):
+            os.remove(mp3_file)
+
+        try:
+            subprocess.check_call(['ffmpeg', '-i', wav_file, mp3_file])
+        except subprocess.CalledProcessError as e:
+            cprint(f"[!] Error occurred while converting {wav_file} to mp3: {str(e)}", color="red")
+            return None
+
+        return mp3_file
 
 
 if __name__ == "__main__":
-    rec = Recorder()
-    print("Start recording")
-    rec.start()
-    time.sleep(5)
-    print("Stop recording")
-    rec.stop()
-    print("Saving")
-    rec.save("test.wav")
-    print("Converting wav to mp3")
-    Recorder.wavTomp3("test.wav")
-    print("deleting wav")
-    Recorder.delete("test.wav")
+    output_name = os.path.join(os.path.expanduser('~'), 'Desktop', 'output.wav')
+
+    rec = Recorder(chunk=1024, channels=1, rate=16000)
+
+    # Start recording
+    rec.start(duration=3, filename=output_name)
+
+    # Convert to MP3
+    # mp3_file = rec.wav_to_mp3(output_name)
+
+    # Delete file
+    # rec.delete(output_name)

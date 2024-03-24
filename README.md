@@ -1,112 +1,108 @@
 # AudioRec - A Python package
 
-AudioRec is the most simple audio recorder for python. Record any sound from your standard recording device to WAV or MP3. Simply hit start, stop and save - done.
+AudioRec is the most simple audio recorder for python. Record any sound from your standard recording device to WAV or MP3. Simply hit start with given duration - done.
 
-- Record sound from the standard input device
-- Recording happens in another thread - stop the recording on command
+- Record sound from the default input device
+- Recording happens in another thread
 - Save the sound as a wav
 - Quickly convert it to MP3
+- Delete file after use
 
 # How to get it
-To download AudioRec, you simply use pip:
+To download AudioRec, Clone [this](https://github.com/rudymohammadbali/AudioRec) repository and add *AudioRec* folder into your project folder:
 ```sh
-pip install AudioRec
+git clone https://github.com/rudymohammadbali/AudioRec
+```
+```sh
+cd AudioRec
+```
+```sh
+pip install -r requirements
 ```
 
-Or you clone [this](https://github.com/joelbarmettlerUZH/AudioRec) respository and add all the files contained in the *AudioRec* folder into your project folder.
+Install ffmpeg for converting
+```sh
+# on Ubuntu or Debian
+sudo apt update && sudo apt install ffmpeg
+
+# on Arch Linux
+sudo pacman -S ffmpeg
+
+# on MacOS using Homebrew (https://brew.sh/)
+brew install ffmpeg
+
+# on Windows using Chocolatey (https://chocolatey.org/)
+choco install ffmpeg
+
+# on Windows using Scoop (https://scoop.sh/)
+scoop install ffmpeg
+```
 
 # Usage
 
-AudioRec is deadly simple. First, import the package and create a recorder instance.
-
 ```python
+import os
 from AudioRec import Recorder
 
-rec = Recorder()
-```
-## Start / Stopping a recording
+output_name = os.path.join(os.path.expanduser('~'), 'Desktop', 'output.wav')
 
-To start a new recording, simply hit rec.start()
+rec = Recorder(chunk=1024, channels=1, rate=16000)
+
+rec.start(duration=3, filename=output_name)
+```
+## Convert wav to mp3
+
+Make sure ffmpeg is installed
 
 ```python
-rec.start()
+mp3_file = rec.wav_to_mp3(output_name)
 ```
 
-Your recording starts in another thread, so you are free to continue with your main program. In the most simple case, just wait for X seconds before you stop the recording.
-
+## Delete file
 ```python
-time.sleep(5)   # Waits for 5 seconds
-```
-Then call the recording to stop.
-
-```python
-rec.stop()
-```
-
-## Save the recording and convert it to MP3
-
-To save the recorded audio, specify a filename and call *save*.
-
-```python
-rec.save("test.wav")
-```
-
-Now that your file is saved, convert it to MP3 and delete the old file.
-
-```python
-Recorder.wavTomp3("test.wav")
-Recorder.delete("test.wav")
+rec.delete(output_name)
 ```
 
 # Coplete example
 ```python
-rec = Recorder()
-print("Start recording")
-rec.start()
+import os
+import time
+from AudioRec import Recorder
+
+output_name = os.path.join(os.path.expanduser('~'), 'Desktop', 'output.wav')
+
+rec = Recorder(chunk=1024, channels=1, rate=16000)
+
+# Start recording
+rec.start(duration=3, filename=output_name)
+
 time.sleep(5)
-print("Stop recording")
-rec.stop()
-print("Saving")
-rec.save("test.wav")
-print("Converting wav to mp3")
-Recorder.wavTomp3("test.wav")
-print("deleting wav")
-Recorder.delete("test.wav")
+# Convert to mp3
+mp3_file = rec.wav_to_mp3(output_name)
+
+time.sleep(5)
+# Delete file
+rec.delete(output_name)
 ```
 
 # Optinal parameters
-When you initialize a recorder, you can define the chunk-size, the channels (2 for stereo) and the bitrate (44100 Hz standard).
+When you initialize a recorder, you can define the chunk-size, the channels (2 for stereo default) and the bitrate (44100 Hz default).
 
 ```python
-rec = Recorder(chunk=1024, channels=2, rate=44100)
+rec = Recorder(chunk=1024, channels=1, rate=16000)
 ```
+<h2 align="left">Support</h2>
 
-License
-----
+###
 
-IMPORTANT: The file "ffmpeg.exe" is excluded from the MIT license and fall under the GNU2 License. Download the original [here](https://www.ffmpeg.org/)
+<p align="left">If you'd like to support my ongoing efforts in sharing fantastic open-source projects, you can contribute by making a donation via PayPal.</p>
 
-MIT License
+###
 
-Copyright (c) 2018 Joel Barmettler
+<div align="center">
+  <a href="https://www.paypal.com/paypalme/iamironman0" target="_blank">
+    <img src="https://img.shields.io/static/v1?message=PayPal&logo=paypal&label=&color=00457C&logoColor=white&labelColor=&style=flat" height="40" alt="paypal logo"  />
+  </a>
+</div>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
-Hire us: [Software Entwickler in Zürich](https://polygon-software.ch)!
+###

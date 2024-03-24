@@ -1,0 +1,2 @@
+PyAudio~=0.2.14
+termcolor~=2.4.0
